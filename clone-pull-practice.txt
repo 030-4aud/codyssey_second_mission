@@ -1,0 +1,1 @@
+Clone/pull practice change: verified that a commit made in the cloned working copy can be pushed and pulled into the original working copy.
