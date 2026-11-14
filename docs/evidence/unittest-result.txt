@@ -1,0 +1,17 @@
+Command: python -m unittest discover -s tests -v
+Environment: Python Python 3.13.5
+
+test_backup_can_be_restored_after_a_later_save (test_quiz_game.QuizGameTests.test_backup_can_be_restored_after_a_later_save) ... ok
+test_corrupt_file_falls_back_to_defaults (test_quiz_game.QuizGameTests.test_corrupt_file_falls_back_to_defaults) ... ok
+test_default_quiz_count_is_at_least_five_and_is_twelve (test_quiz_game.QuizGameTests.test_default_quiz_count_is_at_least_five_and_is_twelve) ... ok
+test_invalid_input_boundaries_retry_then_accept (test_quiz_game.QuizGameTests.test_invalid_input_boundaries_retry_then_accept) ... ok
+test_legacy_file_without_schema_version_is_migrated (test_quiz_game.QuizGameTests.test_legacy_file_without_schema_version_is_migrated) ... ok
+test_menu_integration_list_then_exit (test_quiz_game.QuizGameTests.test_menu_integration_list_then_exit) ... ok
+test_save_writes_schema_version_and_round_trips (test_quiz_game.QuizGameTests.test_save_writes_schema_version_and_round_trips) ... ok
+test_check_answer (test_quiz_game.QuizTests.test_check_answer) ... ok
+test_quiz_rejects_invalid_choice_count (test_quiz_game.QuizTests.test_quiz_rejects_invalid_choice_count) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.021s
+
+OK
