@@ -1,0 +1,358 @@
+"""퀴즈 게임의 메뉴, 진행, 데이터 저장을 관리하는 모듈."""
+
+import json
+import random
+from pathlib import Path
+
+from quiz import Quiz
+
+
+class QuizGame:
+    """퀴즈 목록과 최고 점수, 사용자 입력, 파일 저장을 관리한다."""
+
+    def __init__(self, state_path=None):
+        project_dir = Path(__file__).resolve().parent
+        self.state_path = Path(state_path) if state_path else project_dir / "state.json"
+        self.quizzes = self.default_quizzes()
+        self.best_score = None
+        self.best_total = None
+        self.load_data()
+
+    @staticmethod
+    def default_quizzes():
+        """주술회전 설정의 문화적·역사적 모티브를 다루는 기본 퀴즈."""
+        quiz_data = [
+            {
+                "question": "『일본서기』에 등장하는 양면숙나(료멘스쿠나)의 외형에 대한 설명으로 알맞은 것은?",
+                "choices": [
+                    "한 몸에 두 얼굴과 네 개의 팔이 있었다",
+                    "세 개의 머리와 여섯 개의 날개가 있었다",
+                    "한 얼굴에 네 개의 눈과 두 개의 꼬리가 있었다",
+                    "몸 전체가 뱀의 비늘로 덮여 있었다",
+                ],
+                "answer": 1,
+                "explanation": "『일본서기』의 기록은 한 몸에 두 얼굴이 있고 각 면에 손과 발이 있어 네 손으로 활과 화살을 다루었다고 전합니다.",
+            },
+            {
+                "question": "『일본서기』에서 양면숙나가 등장하는 지역으로 기록된 곳은?",
+                "choices": ["이즈모", "히다", "사가", "에조"],
+                "answer": 2,
+                "explanation": "해당 기록은 닌토쿠 천황 65년 조에 히다국(飛騨國)의 숙나를 언급합니다.",
+            },
+            {
+                "question": "『일본서기』의 중앙 조정 기록에서 양면숙나는 어떤 인물로 묘사되는가?",
+                "choices": [
+                    "백성을 위해 농사를 가르친 현자",
+                    "궁중의 제사를 맡은 승려",
+                    "조정의 명을 따르지 않고 백성을 약탈한 인물",
+                    "바다를 건너온 외교 사절",
+                ],
+                "answer": 3,
+                "explanation": "중앙 조정의 기록은 숙나가 조정의 명에 따르지 않고 백성을 약탈했다고 서술합니다. 이는 지역 전승의 평가와 다릅니다.",
+            },
+            {
+                "question": "히다 지역의 일부 사찰 전승에서 양면숙나는 어떤 존재로 전해지기도 하는가?",
+                "choices": [
+                    "지역을 지키거나 사람들을 도운 영웅적 존재",
+                    "일본에 불교를 처음 전한 왕",
+                    "바다의 용왕을 섬기는 무녀",
+                    "에도 막부를 세운 장군",
+                ],
+                "answer": 1,
+                "explanation": "히다 지역 전승에는 숙나를 지역의 수호자나 관음의 화신처럼 보는 이야기들이 남아 있습니다. 지역 전승은 『일본서기』의 묘사와 다릅니다.",
+            },
+            {
+                "question": "일본의 전통적 음양도(陰陽道)가 다루었던 영역으로 가장 적절한 것은?",
+                "choices": [
+                    "항해술과 화약 제조만을 다루는 기술",
+                    "점술·풍수·주술·역법·천문 등",
+                    "근대 산업과 기계 공학",
+                    "무사들의 검술과 궁술 훈련만을 다루는 체계",
+                ],
+                "answer": 2,
+                "explanation": "학술 연구는 음양도를 점술, 지리·풍수, 주술, 역법, 천문 등과 관련된 복합적인 실천 체계로 설명합니다.",
+            },
+            {
+                "question": "역사적으로 음양사(陰陽師)가 관료로 활동했던 기관의 이름은?",
+                "choices": ["다자이후", "쇼군부", "음양료(陰陽寮)", "막부 대학료"],
+                "answer": 3,
+                "explanation": "9세기 일본 조정에는 음양료가 설치되었고, 음양사들은 점술·천문·역법 등의 업무를 맡았습니다.",
+            },
+            {
+                "question": "식신(式神, 시키가미)에 대한 현대 대중문화의 흔한 묘사와 가까운 것은?",
+                "choices": [
+                    "음양사가 부리거나 조종하는 영적 존재",
+                    "무사가 사용하는 화승총",
+                    "신사 입구에 세우는 돌기둥",
+                    "불교 사찰의 종을 치는 의식",
+                ],
+                "answer": 1,
+                "explanation": "현대 작품에서는 음양사가 부리는 영적 존재로 자주 묘사되지만, 학술 연구는 시대와 문헌에 따라 식신의 의미가 다양했다고 지적합니다.",
+            },
+            {
+                "question": "식신(시키가미)의 역사적 의미를 연구할 때 주의할 점은 무엇인가?",
+                "choices": [
+                    "시대와 문헌에 따라 의미와 묘사가 달라진다는 점",
+                    "모든 시대에 완전히 같은 모습으로 묘사되었다는 점",
+                    "일본에는 식신 관련 기록이 전혀 없다는 점",
+                    "식신은 언제나 동물의 모습이었다는 점",
+                ],
+                "answer": 1,
+                "explanation": "일본종교학회지에 실린 Carolyn Pang의 연구는 식신의 정의와 묘사가 문헌·시대에 따라 다양하다고 설명합니다.",
+            },
+            {
+                "question": "아쿠타미 게게 작가는 2020년 르 피가로 인터뷰에서 에반게리온을 통해 무엇을 접하게 되었다고 말했는가?",
+                "choices": [
+                    "그리스의 올림픽 경기 규칙",
+                    "성서의 신화들",
+                    "중국의 무협 소설",
+                    "이집트의 피라미드 건축법",
+                ],
+                "answer": 2,
+                "explanation": "작가는 에반게리온이 자신의 영향 중 하나였고, 이를 통해 성서 신화에 익숙해졌다고 인터뷰에서 언급했습니다. 이를 작품 전체의 유일한 기원이라고 단정할 수는 없습니다.",
+            },
+            {
+                "question": "보도된 작가의 설명에 따르면 스쿠나의 '복마어주자' 디자인에 참고된 불교·일본 신격의 조합은?",
+                "choices": [
+                    "야마타노오로치와 아마테라스",
+                    "야만타카와 고즈텐노",
+                    "스사노오와 이나리",
+                    "벤케이와 미나모토노 요시쓰네",
+                ],
+                "answer": 2,
+                "explanation": "2024년 보도에서 작가의 디자인 설명을 인용하며 야마타(야만타카)와 고즈텐노를 언급합니다. 이는 인터뷰 번역을 전한 보도에 근거한 내용입니다.",
+            },
+            {
+                "question": "불교의 야만타카(Yamantaka)는 일반적으로 어떤 존재로 알려져 있는가?",
+                "choices": [
+                    "죽음의 신 야마를 제압하는 분노존",
+                    "농업을 관장하는 곡물의 여신",
+                    "바다의 항해를 돕는 용왕",
+                    "일본 최초의 천황",
+                ],
+                "answer": 1,
+                "explanation": "야만타카는 특히 금강승 불교 전통에서 죽음의 신 야마를 제압하는 분노존으로 설명됩니다. 작품 속 연출은 종교 도상을 창작적으로 재구성한 것입니다.",
+            },
+            {
+                "question": "주술회전의 모티브를 조사할 때 가장 타당한 태도는 무엇인가?",
+                "choices": [
+                    "작품 속 설정은 모두 실제 역사와 완전히 같다고 본다",
+                    "팬덤의 추측을 작가의 공식 발언으로 취급한다",
+                    "역사 기록·지역 전승·작가 발언·해석을 구분한다",
+                    "종교적 상징은 모두 같은 종교에서 나왔다고 본다",
+                ],
+                "answer": 3,
+                "explanation": "하나의 작품은 여러 문화권의 상징을 재구성할 수 있습니다. 근거의 종류를 구분해야 사실과 해석을 혼동하지 않습니다.",
+            },
+        ]
+        return [Quiz.from_dict(item) for item in quiz_data]
+
+    def load_data(self):
+        """state.json을 읽고, 없거나 손상되었으면 기본 데이터로 복구한다."""
+        if not self.state_path.exists():
+            print("📂 저장 파일이 없어 기본 퀴즈 데이터로 시작합니다.")
+            self.save_data()
+            return
+
+        try:
+            with self.state_path.open("r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            if not isinstance(data, dict) or not isinstance(data.get("quizzes"), list):
+                raise ValueError("저장 데이터의 기본 구조가 올바르지 않습니다.")
+
+            loaded_quizzes = []
+            for index, item in enumerate(data["quizzes"], start=1):
+                try:
+                    loaded_quizzes.append(Quiz.from_dict(item))
+                except (TypeError, ValueError) as error:
+                    print(f"⚠️ {index}번째 퀴즈를 불러오지 못해 건너뜁니다: {error}")
+
+            self.quizzes = loaded_quizzes
+            if data["quizzes"] and not loaded_quizzes:
+                raise ValueError("저장된 퀴즈를 하나도 읽을 수 없습니다.")
+
+            score = data.get("best_score")
+            total = data.get("best_total")
+            if isinstance(score, int) and not isinstance(score, bool) and score >= 0:
+                self.best_score = score
+                if isinstance(total, int) and not isinstance(total, bool) and total >= 0:
+                    self.best_total = total
+                else:
+                    self.best_total = None
+            else:
+                self.best_score = None
+                self.best_total = None
+
+            print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개)")
+
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as error:
+            print(f"⚠️ 저장 파일을 읽지 못했습니다: {error}")
+            print("기본 퀴즈 데이터로 초기화합니다.")
+            self.quizzes = self.default_quizzes()
+            self.best_score = None
+            self.best_total = None
+            self.save_data()
+
+    def save_data(self):
+        """퀴즈와 최고 점수를 UTF-8 JSON 파일에 안전하게 저장한다."""
+        data = {
+            "quizzes": [quiz.to_dict() for quiz in self.quizzes],
+            "best_score": self.best_score,
+            "best_total": self.best_total,
+        }
+        temporary_path = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
+
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            with temporary_path.open("w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+                file.write("\n")
+            temporary_path.replace(self.state_path)
+            return True
+        except OSError as error:
+            print(f"⚠️ 데이터를 저장하지 못했습니다: {error}")
+            try:
+                if temporary_path.exists():
+                    temporary_path.unlink()
+            except OSError:
+                pass
+            return False
+
+    @staticmethod
+    def input_number(prompt, minimum, maximum):
+        """공백·빈 입력·숫자 변환 실패·범위 오류를 처리하는 숫자 입력 함수."""
+        while True:
+            raw_value = input(prompt).strip()
+            if not raw_value:
+                print("⚠️ 입력이 비어 있습니다. 숫자를 입력해 주세요.")
+                continue
+            try:
+                value = int(raw_value)
+            except ValueError:
+                print("⚠️ 숫자로 입력해 주세요.")
+                continue
+            if not minimum <= value <= maximum:
+                print(f"⚠️ {minimum}부터 {maximum} 사이의 숫자를 입력해 주세요.")
+                continue
+            return value
+
+    @staticmethod
+    def input_non_empty(prompt):
+        """앞뒤 공백을 제거하고 빈 문자열을 다시 입력받는다."""
+        while True:
+            value = input(prompt).strip()
+            if value:
+                return value
+            print("⚠️ 빈칸으로 등록할 수 없습니다. 다시 입력해 주세요.")
+
+    def show_menu(self):
+        """메인 메뉴를 출력한다."""
+        print("\n" + "=" * 56)
+        print("       🌀 주술회전 설정 모티브 탐구 퀴즈 🌀")
+        print("=" * 56)
+        print("  1. 퀴즈 풀기")
+        print("  2. 퀴즈 추가")
+        print("  3. 퀴즈 목록")
+        print("  4. 최고 점수 확인")
+        print("  5. 종료")
+        print("=" * 56)
+
+    def play_quiz(self):
+        """퀴즈를 무작위 순서로 출제하고 결과 및 최고 점수를 관리한다."""
+        if not self.quizzes:
+            print("📭 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
+            return
+
+        quiz_order = self.quizzes[:]
+        random.shuffle(quiz_order)
+        total = len(quiz_order)
+        correct_count = 0
+
+        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
+        for number, quiz in enumerate(quiz_order, start=1):
+            quiz.display(number)
+            answer = self.input_number("정답 입력 (1-4): ", 1, 4)
+            if quiz.check_answer(answer):
+                correct_count += 1
+                print("✅ 정답입니다!")
+            else:
+                print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.")
+            quiz.show_explanation()
+
+        score = round(correct_count / total * 100)
+        print("\n" + "=" * 56)
+        print(f"🏆 결과: {total}문제 중 {correct_count}문제 정답! ({score}점)")
+
+        if self.best_score is None or correct_count > self.best_score:
+            self.best_score = correct_count
+            self.best_total = total
+            print("🎉 새로운 최고 점수입니다!")
+            self.save_data()
+        else:
+            print(f"현재 최고 기록은 {self.best_score}문제 정답입니다.")
+        print("=" * 56)
+
+    def add_quiz(self):
+        """새 퀴즈 한 개를 입력받아 목록에 추가하고 저장한다."""
+        print("\n📌 새로운 퀴즈를 추가합니다.")
+        question = self.input_non_empty("문제를 입력하세요: ")
+        choices = []
+        for number in range(1, 5):
+            choices.append(self.input_non_empty(f"선택지 {number}: "))
+        answer = self.input_number("정답 번호 (1-4): ", 1, 4)
+
+        try:
+            new_quiz = Quiz(question, choices, answer)
+        except ValueError as error:
+            print(f"⚠️ 퀴즈를 등록하지 못했습니다: {error}")
+            return
+
+        self.quizzes.append(new_quiz)
+        if self.save_data():
+            print("✅ 퀴즈가 추가되고 state.json에 저장되었습니다!")
+        else:
+            print("⚠️ 퀴즈는 실행 중 목록에 추가되었지만 파일 저장에 실패했습니다.")
+
+    def show_quizzes(self):
+        """저장된 퀴즈의 문제 목록을 출력한다."""
+        if not self.quizzes:
+            print("\n📭 등록된 퀴즈가 없습니다.")
+            return
+
+        print(f"\n📋 등록된 퀴즈 목록 (총 {len(self.quizzes)}개)")
+        print("-" * 56)
+        for number, quiz in enumerate(self.quizzes, start=1):
+            print(f"[{number}] {quiz.question}")
+        print("-" * 56)
+
+    def show_score(self):
+        """저장된 최고 점수를 출력한다."""
+        print("\n" + "=" * 56)
+        if self.best_score is None:
+            print("🏆 아직 퀴즈를 푼 기록이 없습니다.")
+        elif self.best_total:
+            percentage = round(self.best_score / self.best_total * 100)
+            print(f"🏆 최고 점수: {self.best_score}/{self.best_total}문제 정답 ({percentage}점)")
+        else:
+            print(f"🏆 최고 정답 수: {self.best_score}문제")
+        print("=" * 56)
+
+    def run(self):
+        """사용자가 종료를 선택할 때까지 메뉴를 반복한다."""
+        while True:
+            self.show_menu()
+            choice = self.input_number("선택: ", 1, 5)
+
+            if choice == 1:
+                self.play_quiz()
+            elif choice == 2:
+                self.add_quiz()
+            elif choice == 3:
+                self.show_quizzes()
+            elif choice == 4:
+                self.show_score()
+            elif choice == 5:
+                self.save_data()
+                print("👋 퀴즈 게임을 종료합니다. 이용해 주셔서 감사합니다!")
+                break
