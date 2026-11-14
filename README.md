@@ -254,28 +254,3 @@ cd quiz-clone-practice
 git pull origin main
 ```
 
-별도 clone 폴더에서 README를 수정하고 커밋·push한 뒤 원본 폴더에서 `git pull origin main`을 실행해 변경사항이 반영되는지 확인합니다. 실습 기록은 실제 수행 결과로 남겨야 합니다.
-
-## 12. 제출 스크린샷 목록
-
-실제 본인 PC에서 캡처한 파일을 `docs/screenshots/`에 넣습니다.
-
-- `menu.png`: 실행 및 메뉴
-- `play.png`: 퀴즈 출제 및 결과
-- `add_quiz.png`: 퀴즈 추가
-- `score.png`: 최고 점수
-- `backup.png`: 백업 복원
-- `git-log.png`: 브랜치 그래프와 커밋 로그
-- `git-remote.png`: 원격 URL
-- `git-push.png`: push 성공 결과
-
-상세한 캡처 기준은 `docs/screenshots/README.md`를 참고하세요. 이 ZIP에는 실제 사용자 환경에서만 생성 가능한 스크린샷과 GitHub push 증빙을 임의로 만들어 넣지 않았습니다.
-
-## 13. 참고 문서
-
-- `docs/architecture.md`: 클래스 구조, 책임 분리, JSON 대안, 동시성, 백업·복구
-- `docs/quiz_design.md`: 기본 퀴즈 12개와 주제 설계
-- `docs/sources.md`: 문제별 출처 기록 양식
-- `docs/verification.md`: 자동 테스트 및 수동 검증 절차
-- `docs/git-practice-log.md`: 브랜치·병합·원격 증빙 생성 절차
-- `docs/screenshots/README.md`: 실제 제출용 캡처 가이드
