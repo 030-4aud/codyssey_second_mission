@@ -7,5 +7,3 @@
 - 기본 데이터: `state.json`에 주제 관련 퀴즈 12개 포함
 - Git: 브랜치 `feature/quiz-game` 생성 후 `main`에 병합, 총 커밋 16개 이상
 - clone/pull: 별도의 로컬 bare remote를 통해 clone, 복제본 commit/push, 원본 pull 흐름을 확인
-
-주의: 이 기록은 로컬 개발 환경의 검증 결과다. GitHub에 저장소를 생성하거나 본인 계정으로 push한 상태는 아니다. 제출 전 GitHub 원격 주소를 설정하고 push 및 실제 clone/pull을 수행해야 한다.
